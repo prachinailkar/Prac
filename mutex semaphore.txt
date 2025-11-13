@@ -1,0 +1,62 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int buffer[5];          // Shared buffer of size 5
+    int in = 0, out = 0;    // Indices for producer and consumer
+    int full = 0, empty = 5; // Counters for buffer slots
+    int choice, item;
+
+    while (true) {
+        cout << "\n1. Produce\n2. Consume\n3. Exit\nEnter your choice: ";
+        cin >> choice;
+
+        if (choice == 1) { // PRODUCER
+            if (empty == 0) {
+                cout << "Buffer is full! Producer must wait.\n";
+            } else {
+                cout << "Enter data to produce: ";
+                cin >> item;
+
+                buffer[in] = item;
+                in = (in + 1) % 5; // Circular buffer
+                full++;
+                empty--;
+
+                cout << "Produced item: " << item << endl;
+                cout << "Current buffer: ";
+                for (int i = 0; i < full; i++)
+                    cout << buffer[(out + i) % 5] << " ";
+                cout << endl;
+            }
+        }
+
+        else if (choice == 2) { // CONSUMER
+            if (full == 0) {
+                cout << "Buffer is empty! Consumer must wait.\n";
+            } else {
+                item = buffer[out];
+                out = (out + 1) % 5;
+                full--;
+                empty++;
+
+                cout << "Consumed item: " << item << endl;
+                cout << "Current buffer: ";
+                for (int i = 0; i < full; i++)
+                    cout << buffer[(out + i) % 5] << " ";
+                cout << endl;
+            }
+        }
+
+        else if (choice == 3) {
+            cout << "Exiting...\n";
+            break;
+        }
+
+        else {
+            cout << "Invalid choice! Try again.\n";
+        }
+    }
+
+    return 0;
+}

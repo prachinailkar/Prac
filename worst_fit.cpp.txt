@@ -1,0 +1,44 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int m, n;
+    cout << "Enter number of memory blocks: ";
+    cin >> m;
+    int blocks[m];
+    cout << "Enter sizes of memory blocks:\n";
+    for (int i = 0; i < m; i++) cin >> blocks[i];
+
+    cout << "Enter number of processes: ";
+    cin >> n;
+    int processes[n];
+    cout << "Enter sizes of processes:\n";
+    for (int i = 0; i < n; i++) cin >> processes[i];
+
+    int allocation[n];
+    for (int i = 0; i < n; i++) allocation[i] = -1;
+	
+    for (int i = 0; i < n; i++) {
+        int worstIndex = -1;
+        for (int j = 0; j < m; j++) {
+            if (blocks[j] >= processes[i]) {
+                if (worstIndex == -1 || blocks[j] > blocks[worstIndex])
+                    worstIndex = j;
+            }
+        }
+        if (worstIndex != -1) {
+            allocation[i] = worstIndex;
+            blocks[worstIndex] -= processes[i];
+        }
+    }
+
+    cout << "\nWorst Fit Allocation:\n";
+    for (int i = 0; i < n; i++) {
+        if (allocation[i] != -1)
+            cout << "Process " << i + 1 << " -> Block " << allocation[i] + 1 << endl;
+        else
+            cout << "Process " << i + 1 << " -> Not Allocated\n";
+    }
+
+    return 0;
+}

@@ -1,0 +1,82 @@
+How to Build and Run the JNI Project
+
+This guide provides the full workflow for compiling both the Java and C++ code and linking them together.
+
+Prerequisites
+
+Java Development Kit (JDK): You need the full JDK (not just the JRE) to get java, javac, and the C++ header files (jni.h).
+
+C++ Compiler (VC++ or MinGW): You need a C++ compiler to create the DLL. These instructions will use g++ from the MinGW-w64 toolchain, which is a popular free C++ compiler for Windows. The commands are very similar for the Visual C++ compiler (cl.exe).
+
+Build and Run Steps
+
+Follow these steps in order from your terminal or command prompt.
+
+Step 1: Compile the Java Code
+
+First, compile your Java file. This creates the .class file.
+
+javac MathOperations.java
+
+
+Step 2: Generate the JNI C++ Header
+
+Next, use javac -h to automatically generate the C++ header file (.h) that defines the function signatures JNI expects.
+
+javac -h . MathOperations.java
+
+
+This command will create a file named MathOperations.h. Your MathNative.cpp file includes this header.
+
+Step 3: Compile the C++ DLL
+
+This is the most critical step. You will compile your MathNative.cpp file into a DLL.
+
+IMPORTANT: You must tell the C++ compiler where to find the JNI header files. They are located inside your JDK installation directory.
+
+Find your JDK's path. It's typically something like C:\Program Files\Java\jdk-17.0.2.
+
+The command using g++ (from MinGW) is:
+
+# Replace "%JAVA_HOME%" with the path to your JDK
+# e.g., -I"C:\Program Files\Java\jdk-17\include"
+
+g++ -shared -o MathNative.dll -I"%JAVA_HOME%\include" -I"%JAVA_HOME%\include\win32" MathNative.cpp
+
+
+Command Breakdown:
+
+g++: The C++ compiler.
+
+-shared: Tells the compiler to create a shared library (a DLL).
+
+-o MathNative.dll: Specifies the output filename.
+
+-I"%JAVA_HOME%\include": Tells the compiler to look for jni.h.
+
+-I"%JAVA_HOME%\include\win32": Tells the compiler to look for jni_md.h (which jni.h depends on).
+
+MathNative.cpp: The C++ source file to compile.
+
+After running this, you should have MathNative.dll in your directory.
+
+Step 4: Run the Java Test Application
+
+Finally, run the Java program. You must tell the Java Virtual Machine (JVM) where to find your new DLL using the java.library.path property.
+
+# -Djava.library.path=. tells the JVM to look for DLLs in the current directory ('.')
+java -Djava.library.path=. MathOperations
+
+
+Expected Output
+
+If successful, you will see the output from both the Java and C++ code:
+
+--- Java Test Application Running ---
+Calling C++ DLL for math operations...
+[C++ DLL]: Executing add(100, 25)
+Result of add(100, 25) from C++: 125
+[C++ DLL]: Executing subtract(100, 25)
+Result of subtract(100, 25) from C++: 75
+
+--- Test SUCCESSFUL ---

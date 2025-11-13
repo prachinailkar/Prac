@@ -1,0 +1,55 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int n, quantum;
+    cout << "Enter number of processes: ";
+    cin >> n;
+
+    int pid[20], arrival[20], burst[20], rem[20], wait[20] = {0}, turn[20];
+    for (int i = 0; i < n; i++) {
+        pid[i] = i + 1;
+        cout << "Enter Arrival and Burst for P" << pid[i] << ": ";
+        cin >> arrival[i] >> burst[i];
+        rem[i] = burst[i];
+    }
+
+    cout << "Enter Time Quantum: ";
+    cin >> quantum;
+
+    int t = 0;
+    string gantt = "";
+
+    while (true) {
+        bool done = true;
+        for (int i = 0; i < n; i++) {
+            if (rem[i] > 0) {
+                done = false;
+                gantt += "P" + to_string(pid[i]) + " ";
+                if (rem[i] > quantum) {
+                    t += quantum;
+                    rem[i] -= quantum;
+                } else {
+                    t += rem[i];
+                    wait[i] = t - burst[i] - arrival[i];
+                    if (wait[i] < 0) wait[i] = 0;
+                    rem[i] = 0;
+                }
+            }
+        }
+        if (done) break;
+    }
+
+    for (int i = 0; i < n; i++)
+        turn[i] = burst[i] + wait[i];
+
+    cout << "\n--- Round Robin (Preemptive) Scheduling ---\n";
+    cout << "PID\tArr\tBurst\tWait\tTurn\n";
+    for (int i = 0; i < n; i++)
+        cout << pid[i] << "\t" << arrival[i] << "\t" << burst[i]
+             << "\t" << wait[i] << "\t" << turn[i] << endl;
+
+    cout << "\nGantt Chart:\n" << gantt << endl;
+
+    return 0;
+}

@@ -1,0 +1,55 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int no_of_processes, no_of_blocks;
+
+    cout << "Enter the number of memory blocks: ";
+    cin >> no_of_blocks;
+
+    int* blocks = new int[no_of_blocks];
+    cout << "Enter the size of each block:\n";
+    for (int i = 0; i < no_of_blocks; i++) {
+        cout << "Block " << i + 1 << " size: ";
+        cin >> blocks[i];
+    }
+
+    cout << "\nEnter the number of processes: ";
+    cin >> no_of_processes;
+
+    int* process = new int[no_of_processes];
+    cout << "Enter the size of each process:\n";
+    for (int i = 0; i < no_of_processes; i++) {
+        cout << "Process " << i + 1 << " size: ";
+        cin >> process[i];
+    }
+
+    int* allocation = new int[no_of_processes];
+    for (int i = 0; i < no_of_processes; i++)
+        allocation[i] = -1;
+
+    for (int i = 0; i < no_of_processes; i++) {
+        for (int j = 0; j < no_of_blocks; j++) {
+            if (blocks[j] >= process[i]) {
+                allocation[i] = j;
+                blocks[j] -= process[i];
+                break;
+            }
+        }
+    }
+
+
+    cout << "\nFirst Fit Memory Allocation Result:\n";
+    for (int i = 0; i < no_of_processes; i++) {
+        if (allocation[i] != -1)
+            cout << "Process " << i + 1 << " -> Block " << allocation[i] + 1 << endl;
+        else
+            cout << "Process " << i + 1 << " -> Not Allocated\n";
+    }
+	
+    delete[] blocks;
+    delete[] process;
+    delete[] allocation;
+
+    return 0;
+}

@@ -1,0 +1,77 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+struct Process {
+    int pid;
+    int arrival;
+    int priority;
+    int burst;
+    int waiting;
+    int turnaround;
+};
+
+int main() {
+    int n;
+    cout << "Enter number of processes: ";
+    cin >> n;
+
+    Process p[20];
+    for (int i = 0; i < n; i++) {
+        cout << "\nEnter details for Process " << i + 1 << ":\n";
+        p[i].pid = i + 1;
+        cout << "Arrival Time: ";
+        cin >> p[i].arrival;
+        cout << "Priority (lower = higher): ";
+        cin >> p[i].priority;
+        cout << "Burst Time: ";
+        cin >> p[i].burst;
+    }
+
+    // Sort by priority first, then arrival time
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (p[j].priority < p[i].priority || 
+               (p[j].priority == p[i].priority && p[j].arrival < p[i].arrival)) {
+                swap(p[i], p[j]);
+            }
+        }
+    }
+
+    int completion = 0;
+    int gantt[20], time[20];
+
+    cout << "\nPriority (Non-Preemptive) Scheduling Results:\n";
+    cout << "PID\tAT\tBT\tPR\tWT\tTAT\n";
+
+    for (int i = 0; i < n; i++) {
+        if (completion < p[i].arrival)
+            completion = p[i].arrival;
+        completion += p[i].burst;
+
+        p[i].turnaround = completion - p[i].arrival;
+        p[i].waiting = p[i].turnaround - p[i].burst;
+
+        gantt[i] = p[i].pid;
+        time[i] = completion;
+
+        cout << p[i].pid << "\t" << p[i].arrival << "\t" 
+             << p[i].burst << "\t" << p[i].priority << "\t"
+             << p[i].waiting << "\t" << p[i].turnaround << endl;
+    }
+
+    // Gantt Chart
+    cout << "\nGantt Chart:\n";
+    for (int i = 0; i < n; i++) {
+        cout << "|  P" << gantt[i] << "  ";
+    }
+    cout << "|\n";
+
+    cout << "0";
+    for (int i = 0; i < n; i++) {
+        cout << "\t" << time[i];
+    }
+    cout << endl;
+
+    return 0;
+}

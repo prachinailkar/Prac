@@ -1,0 +1,163 @@
+#include <iostream>
+#include <iomanip> // For setprecision and setw
+
+using namespace std;
+
+// Maximum number of processes the array can hold
+const int MAX_PROCESSES = 10;
+
+// Function to calculate Waiting Time and Turnaround Time
+void calculateFCFS(int n, int burst_time[], int arrival_time[], 
+                   int waiting_time[], int turnaround_time[], 
+                   int completion_time[]) {
+
+    // The current time is initially 0
+    int current_time = 0;
+
+    // The first process's calculations
+    // If all AT are 0, WT[0] is 0. If AT[0] > 0, it waits until arrival.
+    
+    // Start time of the first process is its Arrival Time
+    int start_time_0 = arrival_time[0];
+    
+    completion_time[0] = start_time_0 + burst_time[0];
+    turnaround_time[0] = completion_time[0] - arrival_time[0];
+    waiting_time[0] = turnaround_time[0] - burst_time[0];
+    
+    // Update current time to the completion of the first process
+    current_time = completion_time[0];
+
+    // Calculations for subsequent processes
+    for (int i = 1; i < n; i++) {
+        
+        // FCFS Rule: A process starts when the CPU is free (current_time) OR 
+        // when it arrives (arrival_time[i]), whichever is later.
+        int start_time = max(current_time, arrival_time[i]);
+
+        completion_time[i] = start_time + burst_time[i];
+        turnaround_time[i] = completion_time[i] - arrival_time[i];
+        waiting_time[i] = turnaround_time[i] - burst_time[i];
+        
+        // Update current time for the next iteration
+        current_time = completion_time[i];
+    }
+}
+
+// Function to display the results table and averages
+void displayResults(int n, int p_id[], int arrival_time[], int burst_time[], 
+                    int completion_time[], int turnaround_time[], 
+                    int waiting_time[]) {
+    
+    float total_wt = 0;
+    float total_tat = 0;
+
+    cout << "\n========================================================\n";
+    cout << "                FCFS Scheduling Results\n";
+    cout << "========================================================\n";
+    
+    cout << setw(8) << "PID" << setw(8) << "AT" << setw(8) << "BT" 
+         << setw(8) << "CT" << setw(8) << "TAT" << setw(8) << "WT" << endl;
+    cout << "--------------------------------------------------------\n";
+
+    for (int i = 0; i < n; i++) {
+        total_wt += waiting_time[i];
+        total_tat += turnaround_time[i];
+        
+        cout << setw(8) << p_id[i] 
+             << setw(8) << arrival_time[i]
+             << setw(8) << burst_time[i] 
+             << setw(8) << completion_time[i] 
+             << setw(8) << turnaround_time[i] 
+             << setw(8) << waiting_time[i] << endl;
+    }
+    
+    cout << "--------------------------------------------------------\n";
+    
+    cout << fixed << setprecision(2);
+    cout << "Average Turnaround Time: " << total_tat / n << endl;
+    cout << "Average Waiting Time:    " << total_wt / n << endl;
+}
+
+// Function to print a basic text-based Gantt Chart
+void printGanttChart(int n, int p_id[], int completion_time[], int burst_time[]) {
+    cout << "\n========================================================\n";
+    cout << "                     Gantt Chart\n";
+    cout << "========================================================\n";
+
+    // Print the process blocks
+    cout << "|";
+    for (int i = 0; i < n; i++) {
+        // Simple visual block based on Burst Time
+        int block_width = burst_time[i] + 1; // Add 1 for spacing/PID
+        for (int j = 0; j < block_width; j++) {
+            if (j == block_width / 2) {
+                cout << "P" << p_id[i];
+            } else {
+                cout << " ";
+            }
+        }
+        cout << "|";
+    }
+    cout << endl;
+
+    // Print the timeline (time marks below the blocks)
+    int current_time = 0;
+    cout << current_time;
+    for (int i = 0; i < n; i++) {
+        // Calculate the spacing for the current process
+        int spacing = completion_time[i] - current_time; 
+
+        // Adjust for alignment (a simple approach)
+        for (int j = 0; j < spacing * 2; ++j) {
+            cout << " ";
+        }
+        
+        // Print the completion time
+        cout << completion_time[i];
+        current_time = completion_time[i];
+    }
+    cout << endl;
+}
+
+int main() {
+    int n;
+    
+    cout << "Enter the number of processes (max " << MAX_PROCESSES << "): ";
+    cin >> n;
+
+    if (n <= 0 || n > MAX_PROCESSES) {
+        cout << "Invalid number of processes.\n";
+        return 1;
+    }
+
+    // Declare all necessary arrays
+    int p_id[MAX_PROCESSES];
+    int arrival_time[MAX_PROCESSES];
+    int burst_time[MAX_PROCESSES];
+    int waiting_time[MAX_PROCESSES];
+    int turnaround_time[MAX_PROCESSES];
+    int completion_time[MAX_PROCESSES];
+    
+    cout << "\nEnter Process Details:\n";
+    for (int i = 0; i < n; i++) {
+        p_id[i] = i + 1;
+        cout << "P" << p_id[i] << " - Arrival Time (AT): ";
+        cin >> arrival_time[i];
+        cout << "P" << p_id[i] << " - Burst Time (BT): ";
+        cin >> burst_time[i];
+    }
+    
+    // NOTE: This array-based code assumes that the input processes are 
+    // already given in the order of their arrival time (FCFS order). 
+    // If not, a manual sorting algorithm (like Bubble Sort) on all arrays 
+    // based on arrival_time would be necessary here, which complicates 
+    // array-based code significantly.
+    
+    calculateFCFS(n, burst_time, arrival_time, waiting_time, turnaround_time, completion_time);
+    
+    displayResults(n, p_id, arrival_time, burst_time, completion_time, turnaround_time, waiting_time);
+
+    printGanttChart(n, p_id, completion_time, burst_time);
+    
+    return 0;
+}

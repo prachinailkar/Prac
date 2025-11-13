@@ -1,0 +1,66 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int pages[30], frames[10];
+    int n, f;
+
+    cout << "Enter number of pages: ";
+    cin >> n;
+
+    cout << "Enter reference string: ";
+    for (int i = 0; i < n; i++)
+        cin >> pages[i];
+
+    cout << "Enter number of frames: ";
+    cin >> f;
+
+    int count = 0; // number of frames filled
+    int faults = 0;
+
+    for (int i = 0; i < n; i++) {
+        int page = pages[i];
+        bool found = false;
+
+        // check if page is already in frame
+        for (int j = 0; j < count; j++) {
+            if (frames[j] == page) {
+                found = true;
+                break;
+            }
+        }
+
+        // if not found (page fault)
+        if (!found) {
+            // if frame not full
+            if (count < f) {
+                frames[count++] = page;
+            } 
+            else {
+                // find page to replace
+                int farthest = -1, pos = -1;
+                for (int j = 0; j < f; j++) {
+                    int k;
+                    for (k = i + 1; k < n; k++) {
+                        if (frames[j] == pages[k]) break;
+                    }
+                    if (k > farthest) {
+                        farthest = k;
+                        pos = j;
+                    }
+                }
+                frames[pos] = page; // replace page
+            }
+            faults++;
+        }
+
+        // print frames
+        cout << "Frames after page " << page << ": ";
+        for (int j = 0; j < count; j++)
+            cout << frames[j] << " ";
+        cout << endl;
+    }
+
+    cout << "\nTotal Page Faults: " << faults << endl;
+    return 0;
+}
