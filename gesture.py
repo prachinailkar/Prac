@@ -1,0 +1,64 @@
+#pip install opencv-python
+#or    == python -m pip install opencv-python
+# pip install mediapipe
+#python -m pip install mediapipe
+
+import cv2
+import mediapipe as mp
+
+# Initialize MediaPipe Hand model
+mp_hands = mp.solutions.hands
+mp_draw = mp.solutions.drawing_utils
+
+hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.7)
+
+# Start webcam
+cap = cv2.VideoCapture(0)
+
+tip_ids = [4, 8, 12, 16, 20]  # Thumb, Index, Middle, Ring, Pinky tips
+
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+
+    # Flip the frame for mirror effect
+    frame = cv2.flip(frame, 1)
+    h, w, c = frame.shape
+    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    # Process the frame with Mediapipe
+    result = hands.process(rgb_frame)
+    fingers_up = 0
+
+    if result.multi_hand_landmarks:
+        for hand_landmarks in result.multi_hand_landmarks:
+            lm_list = []
+            for id, lm in enumerate(hand_landmarks.landmark):
+                lm_list.append((int(lm.x * w), int(lm.y * h)))
+
+            # Count raised fingers
+            if lm_list:
+                # Thumb
+                if lm_list[tip_ids[0]][0] > lm_list[tip_ids[0] - 1][0]:
+                    fingers_up += 1
+                # Other fingers
+                for id in range(1, 5):
+                    if lm_list[tip_ids[id]][1] < lm_list[tip_ids[id] - 2][1]:
+                        fingers_up += 1
+
+            # Draw hand landmarks
+            mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+
+    # Display finger count
+    cv2.putText(frame, f'Fingers: {fingers_up}', (20, 50),
+                cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 255, 0), 3)
+
+    cv2.imshow("Gesture Control", frame)
+
+    # Exit on pressing 'q'
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()

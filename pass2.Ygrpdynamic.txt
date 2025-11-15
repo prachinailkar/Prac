@@ -1,0 +1,320 @@
+# --- DATA STRUCTURES (Populated by Pass 1, Read by Pass 2) ---
+
+# MNT (Macro Name Table): Stores Macro Name and index in MDT (Dictionary)
+MNT = {}
+# MDT (Macro Definition Table): Stores the body of macros (List)
+MDT = []
+# Intermediate Code: Source code with Macro Definitions removed (List)
+intermediate_code = []
+
+# --- PASS 1 ---
+
+def pass1_macro(input_lines):
+    """
+    Performs Pass 1 of a macro processor.
+    Populates global MNT, MDT, and intermediate_code.
+    """
+    mdt_index = 0
+    macro_on = False
+    
+    for line in input_lines:
+        parts = line.split()
+        
+        # Guard against empty lines
+        if not parts:
+            continue
+
+        # Check for MACRO start
+        if len(parts) > 1 and parts[1].upper() == "MACRO":
+            macro_name = parts[0]
+            MNT[macro_name] = mdt_index
+            macro_on = True
+            # Don't add the 'MACRO' line to MDT or intermediate code
+        
+        # Check for MEND
+        elif parts[0].upper() == "MEND":
+            MDT.append(line) # Add MEND to MDT
+            mdt_index += 1
+            macro_on = False
+            # Don't add MEND to intermediate code
+
+        # If inside a Macro Definition
+        elif macro_on:
+            MDT.append(line) # Add macro body line to MDT
+            mdt_index += 1
+            # Don't add to intermediate code
+            
+        # If not a macro line, it's normal code
+        else:
+            intermediate_code.append(line)
+
+# --- PASS 2 ---
+
+def pass2_macro():
+    """
+    Performs Pass 2 of a macro processor.
+    Reads from global MNT, MDT, and intermediate_code.
+    Returns the final expanded source code.
+    """
+    expanded_source = []
+    
+    # Use 'intermediate_code' (from Pass 1) as the input
+    for line in intermediate_code: 
+        parts = line.split()
+        
+        # Guard against empty lines in intermediate code
+        if not parts:
+            continue
+            
+        token = parts[0]
+        
+        # Check if token is in MNT (It's a Macro Call)
+        if token in MNT:
+            mdt_index = MNT[token]
+            
+            # Expand the macro: Copy lines from MDT until MEND
+            i = mdt_index
+            while True:
+                # Get the line from MDT
+                line_content = MDT[i]
+                
+                # Stop if we hit MEND
+                if line_content.strip().upper() == "MEND":
+                    break
+                    
+                # Add a '+' to indicate it's an expanded line
+                expanded_source.append(f"+ {line_content.strip()}") 
+                i += 1
+        
+        # Not a macro call, just copy the line
+        else:
+            expanded_source.append(line)
+            
+    return expanded_source
+
+# --- MAIN DRIVER ---
+
+def main():
+    # --- Dynamic Input Section ---
+    input_lines = []
+    print("Enter your full assembly code (with macros) line by line.")
+    print("Type 'DONE' (all caps) on a new line when you are finished:")
+    
+    while True:
+        line = input()
+        if line.strip().upper() == "DONE":
+            break
+        input_lines.append(line)
+    # --- End of Dynamic Input ---
+    
+    
+    # --- Run Pass 1 ---
+    pass1_macro(input_lines)
+    
+    print("\n--- PASS I MACRO OUTPUT ---")
+    
+    print("\n## MNT (Macro Name Table)")
+    print(MNT)
+    
+    print("\n## MDT (Macro Definition Table)")
+    if not MDT:
+        print("(No macros defined)")
+    for i, line in enumerate(MDT):
+        print(f"Index {i}: {line.strip()}")
+        
+    print("\n## Intermediate Code (Definitions Removed)")
+    if not intermediate_code:
+        print("(No intermediate code generated)")
+    for line in intermediate_code:
+        print(line)
+
+    # --- Run Pass 2 ---
+    final_expanded_code = pass2_macro()
+    
+    print("\n\n--- PASS II MACRO OUTPUT (Expanded Code) ---")
+    for line in final_expanded_code:
+        print(line)
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Enter your full assembly code (with macros) line by line.
+Type 'DONE' (all caps) on a new line when you are finished:
+START 100
+INCR   
+STORE C
+END
+DONE
+
+--- PASS I MACRO OUTPUT ---
+
+## MNT (Macro Name Table)
+{}
+
+## MDT (Macro Definition Table)
+(No macros defined)
+
+## Intermediate Code (Definitions Removed)
+START 100
+INCR   
+STORE C
+END
+
+
+--- PASS II MACRO OUTPUT (Expanded Code) ---
+START 100
+INCR   
+STORE C
+END
+
+=== Code Execution Successful ===
+
+The Big Picture: What is a Macro Processor?
+Think of a macro as a text shortcut.
+
+You, the programmer, can define a macro (like INCR) to represent a group of instructions (like LOAD A and ADD B).
+
+The Macro Processor is a program that runs before the main assembler. Its only job is to:
+
+Find all your macro definitions.
+
+Find every place you used (or "called") that macro shortcut.
+
+Replace the shortcut with the full group of instructions it stands for.
+
+This process is called "Macro Expansion".
+
+Why "Two Passes"? (The Core Concept)
+This is the most important part. We need two passes (running through the code twice) because of a "chicken and egg" problem:
+
+You must find all the macro definitions before you can start expanding them.
+
+Imagine your code looked like this:
+
+START 100
+CALL_MACRO_A   <-- This is a call
+...
+...
+MACRO_A MACRO  <-- This is the definition
+  LOAD X
+MEND
+If you tried to process this in one single pass, you would hit CALL_MACRO_A on line 2, but you wouldn't know what it means yet, because its definition isn't found until line 5.
+
+The two-pass solution solves this perfectly:
+
+Pass 1: Read the entire program only to find and save all definitions.
+
+Pass 2: Read the program again, and this time, expand all the calls using the definitions you saved from Pass 1.
+
+Pass 1: The "Definition Pass"
+Goal: To build your tables (MNT and MDT) and clean up the code.
+
+This is exactly what your pass1_macro function does. It reads your input code line by line and asks one question: "Is this line part of a macro definition?"
+
+If parts[1] == "MACRO":
+
+It sees a new macro definition starting.
+
+It adds the macro's name (e.g., INCR) to the MNT (Macro Name Table), along with the current index of the MDT.
+
+MNT = {'INCR': 0} means: "I found a macro named INCR, and its definition starts at index 0 of the MDT."
+
+If macro_on == True:
+
+It knows it's inside a macro body.
+
+It adds the line (e.g., LOAD A) to the MDT (Macro Definition Table).
+
+MDT = ["LOAD A", "ADD B", "MEND"] is the "recipe book" containing the full text of every macro.
+
+If parts[0] == "MEND":
+
+It stops adding lines to the MDT and turns macro_on to False.
+
+If else (it's just normal code):
+
+It adds the line (e.g., START 100, INCR, STORE C) to the intermediate_code.
+
+Result of Pass 1:
+
+MNT is built: A "dictionary" of macro names.
+
+MDT is built: A "library" of macro bodies.
+
+intermediate_code is built: Your original code with all the macro definitions ripped out.
+
+Pass 2: The "Expansion Pass"
+Goal: To use the tables from Pass 1 to create the final, expanded code.
+
+This is your pass2_macro function. It doesn't read your original file; it only reads the intermediate_code that Pass 1 created.
+
+It reads the intermediate_code line by line (e.g., START 100, then INCR, then STORE C) and asks one question: "Is this line's first word a macro name?"
+
+How does it know? It checks if token in MNT.
+
+If token is NOT in MNT:
+
+(e.g., START 100, STORE C, END)
+
+It's just a normal line of code. It copies it directly to the expanded_source.
+
+If token IS in MNT:
+
+(e.g., INCR)
+
+Aha! This is a macro call. It's time to expand.
+
+It gets the starting index from the MNT (mdt_index = MNT['INCR'], which is 0).
+
+It jumps to that index in the MDT.
+
+It enters a while loop, copying lines from the MDT (MDT[0] is "LOAD A", MDT[1] is "ADD B") directly into the expanded_source.
+
+It adds a + to the front (+ LOAD A) as a nice visual cue that this line came from a macro expansion.
+
+When it sees MEND in the MDT, it stops the loop.
+
+Crucially, it does not copy the original INCR line. It replaces it with the body from the MDT.
+
+Final Result of Pass 2: You get a final, clean code file with no macros, ready to be sent to the real assembler.
+
+Your intermediate_code was:
+
+START 100
+INCR
+STORE C
+END
+Your final expanded_source is:
+
+START 100
++ LOAD A
++ ADD B
+STORE C
+END
